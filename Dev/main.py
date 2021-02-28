@@ -111,7 +111,7 @@ def main():
             v=np.random.poisson(mu)
             
             #up
-            gv=w@v+bh;
+            gv=w@v+bh
             mu=1.0 / (1.0+np.exp(-gv)) # TODO float
             mu=mu.T
             rr=np.random.rand(*np.shape(mu))
