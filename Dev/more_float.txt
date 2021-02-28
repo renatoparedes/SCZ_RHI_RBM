@@ -1,0 +1,163 @@
+Timer unit: 1e-06 s
+
+Total time: 0.903216 s
+File: main.py
+Function: main at line 8
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+     8                                           @profile
+     9                                           def main():
+    10         1          5.0      5.0      0.0      pCouple=0
+    11         1          2.0      2.0      0.0      NV=[2500,150,30] #number of visible units
+    12         1          2.0      2.0      0.0      NH=[1500] #number of hidden units
+    13                                           
+    14         1          2.0      2.0      0.0      neuronInfo=[structtype(),structtype(),structtype()]
+    15         1         17.0     17.0      0.0      neuronInfo[0].span=np.asarray([1.8,1.8])# x,y span
+    16         1          5.0      5.0      0.0      neuronInfo[0].sm=np.asarray([.3,.3]) #x,y safety margin against edge effects (symmetric)
+    17         1          6.0      6.0      0.0      neuronInfo[0].center=np.asarray([0,.6]) #where the center of the neural population is in trunk centered coordinates;
+    18         1          5.0      5.0      0.0      neuronInfo[0].n=np.asarray([50,50]) #nx,ny
+    19         1          2.0      2.0      0.0      neuronInfo[0].tc=3 #tuning curve width (neurons)
+    20                                           
+    21         1          4.0      4.0      0.0      neuronInfo[1].span=np.asarray([2,1.4]) #x,y span
+    22         1          4.0      4.0      0.0      neuronInfo[1].sm=np.asarray([.4,.4]) #x,y safety margin against edge effects (symmetric)
+    23         1          4.0      4.0      0.0      neuronInfo[1].center=np.asarray([0,.3]) #where the center of the neural population is in trunk centered coordinates;
+    24         1          4.0      4.0      0.0      neuronInfo[1].n=np.asarray([15,10]) #nx,ny
+    25         1          2.0      2.0      0.0      neuronInfo[1].tc=1 #tuning curve width (neurons)
+    26                                           
+    27         1          2.0      2.0      0.0      neuronInfo[2].n=NV[2]
+    28                                           
+    29         1          2.0      2.0      0.0      N_epochs=16 #160
+    30         1          1.0      1.0      0.0      N_batches=40 #400
+    31                                           
+    32         1          2.0      2.0      0.0      N_vects=100
+    33         1          1.0      1.0      0.0      total_annealing=1
+    34         1          2.0      2.0      0.0      Cp=N_epochs/8
+    35         1          1.0      1.0      0.0      Slope=N_epochs/20
+    36         1          2.0      2.0      0.0      dE=1 #plot and save every dE epochs
+    37         1          2.0      2.0      0.0      eta=5e-6###this value of eta hasn't been optimized, but it's more or less OK
+    38         1        152.0    152.0      0.0      etas=((eta/total_annealing)+eta*np.exp(-((np.arange(N_epochs))-Cp)/Slope))/(1+np.exp(-((np.arange(N_epochs))-Cp)/Slope))-np.linspace(0,eta/total_annealing,N_epochs)
+    39         1          2.0      2.0      0.0      tocOld=0
+    40                                           
+    41         1          2.0      2.0      0.0      Names = structtype()
+    42         1          2.0      2.0      0.0      Names.V=['body centered','hand position','tactile'] #names of populations
+    43         1          2.0      2.0      0.0      Names.H=['hidden']
+    44                                           
+    45         1          2.0      2.0      0.0      TrainParams = structtype()
+    46         1          2.0      2.0      0.0      TrainParams.N_epochs=N_epochs
+    47         1          2.0      2.0      0.0      TrainParams.N_batches=N_batches
+    48         1          2.0      2.0      0.0      TrainParams.N_vects=N_vects
+    49         1          1.0      1.0      0.0      TrainParams.TotalAnnealing=total_annealing
+    50         1          2.0      2.0      0.0      TrainParams.Etas=etas
+    51         1     349219.0 349219.0     38.7      g=grbm(NV,NH,['poiss','poiss','poiss'],['bern'],Names,TrainParams,neuronInfo) #population types (bernoulli or poisson)
+    52         1          3.0      3.0      0.0      res=[]
+    53                                           
+    54         1      32855.0  32855.0      3.6      w = g.allW()
+    55         1        104.0    104.0      0.0      v = g.allV()
+    56         1      25619.0  25619.0      2.8      h,mu = g.fastUp(v)
+    57         1      14935.0  14935.0      1.7      v,mu = g.fastDown(h)
+    58                                           
+    59         1         27.0     27.0      0.0      gains=4+6*np.random.rand(3,1)
+    60         1        418.0    418.0      0.0      Bc,H,T=stimgen(0.7,0.7,g.NeuronInfo,gains)
+    61         1          1.0      1.0      0.0      mystim=[Bc, H, T]
+    62                                           
+    63                                           
+    64                                           
+    65                                           
+    66                                               # actual training
+    67         1        996.0    996.0      0.1      stims=np.zeros((np.sum(g.NV),N_vects), dtype=np.float)
+    68         1         12.0     12.0      0.0      hiddenState=np.zeros((g.NH[0],N_vects))
+    69                                           
+    70         2          6.0      3.0      0.0      for epoch in range(1):
+    71         1          1.0      1.0      0.0          re=0
+    72         1          3.0      3.0      0.0          g.TrainParams.TrainingCompleted=False
+    73         1          1.0      1.0      0.0          countb=0
+    74         1          2.0      2.0      0.0          eta=etas[epoch]
+    75                                                   #get weights from the rmb objects, calculations for training are done
+    76                                                   #outside the object for efficiency
+    77         1      14041.0  14041.0      1.6          w=g.allW()
+    78         1         22.0     22.0      0.0          bh=g.allBh()
+    79         1         53.0     53.0      0.0          bv=g.allBv()
+    80                                                   
+    81         3          8.0      2.7      0.0          for batch in range(2): #a batch is made by N_vects individual stimuli
+    82                                                       #generate stimuli
+    83       202        381.0      1.9      0.0              for i in range(N_vects):
+    84       200       2348.0     11.7      0.3                  pH= np.multiply(g.NeuronInfo[1].min+(g.NeuronInfo[1].max-g.NeuronInfo[1].min),*np.random.rand(1,2))
+    85                                                           #double check H and stimgen function for H
+    86       200        578.0      2.9      0.1                  if np.random.rand()>pCouple:
+    87       200       2001.0     10.0      0.2                      pBc=g.NeuronInfo[0].min-.15+ np.multiply((.3+g.NeuronInfo[0].max-g.NeuronInfo[0].min),*np.random.rand(1,2))
+    88                                                           else:
+    89                                                               pBc=pH+.15*np.random.normal(1,2)
+    90       200       1357.0      6.8      0.2                  gains=4+6*np.random.rand(3,1)
+    91       200      58081.0    290.4      6.4                  Bc,H,T=stimgen(pBc,pH,g.NeuronInfo,gains)
+    92                                                           # stims[:,i]=np.concatenate((np.hstack(Bc),np.hstack(H),np.hstack(T)))
+    93       200       3585.0     17.9      0.4                  stims[:,i] = np.concatenate((Bc, H, T), axis=None) # TODO faster concatenate
+    94         2      15175.0   7587.5      1.7              stims=np.random.poisson(stims)
+    95                                                       
+    96                                                       #one-step contrastive divergence, done for all stimuli in a batch
+    97                                                       #at once for efficiency
+    98                                                       #up
+    99         2      20756.0  10378.0      2.3              gv=w@stims+bh
+   100         2       2594.0   1297.0      0.3              mu=1.0 / (1.0+np.exp(-gv)) # TODO float
+   101         2          8.0      4.0      0.0              mu=mu.T
+   102         2       2303.0   1151.5      0.3              rr=np.random.rand(*np.shape(mu))
+   103         2       2319.0   1159.5      0.3              h=1.0*(rr<mu).T # TODO changed to 1.0
+   104                                                       
+   105         2      18894.0   9447.0      2.1              dW=h@stims.T  # TODO keep everything as float
+   106         2        470.0    235.0      0.1              dBv=np.sum(stims,1)
+   107         2        213.0    106.5      0.0              dBh=np.sum(h,1)
+   108                                                       
+   109                                                       #down
+   110         2      19542.0   9771.0      2.2              gv=w.T@h+bv
+   111         2       2556.0   1278.0      0.3              mu=np.exp(gv)
+   112         2      26517.0  13258.5      2.9              v=np.random.poisson(mu)
+   113                                                       
+   114                                                       #up
+   115         2      17509.0   8754.5      1.9              gv=w@v+bh;
+   116         2       2010.0   1005.0      0.2              mu=1.0 / (1.0+np.exp(-gv)) # TODO float
+   117         2          6.0      3.0      0.0              mu=mu.T
+   118         2       2281.0   1140.5      0.3              rr=np.random.rand(*np.shape(mu))
+   119         2       1854.0    927.0      0.2              h=1.0*(rr<mu).T # TODO keep everything as float
+   120                                                       
+   121         2      55718.0  27859.0      6.2              dW=dW-h@v.T # TODO keep everything as float
+   122         2        488.0    244.0      0.1              dBv=dBv-np.sum(v,1)
+   123         2        213.0    106.5      0.0              dBh=dBh-np.sum(h,1)
+   124                                                       
+   125                                                       #update weights and biases
+   126         2      21584.0  10792.0      2.4              w=w+eta*dW
+   127         2         78.0     39.0      0.0              bv=bv+eta*dBv.reshape((2680,1))
+   128         2         18.0      9.0      0.0              bh=bh+eta*dBh.reshape((1500,1))
+   129                                                       
+   130                                                   #end of epoch
+   131                                                   #update weights in the rbm object
+   132         1      58926.0  58926.0      6.5          g.setW(w)
+   133         1         15.0     15.0      0.0          g.setBv(bv)
+   134         1          6.0      6.0      0.0          g.setBh(bh)
+   135                                                   
+   136         1         14.0     14.0      0.0          if np.remainder(epoch,dE)==0: #plot learning parameters
+   137                                                       #save weights and reconstruction errors
+   138                                                       #res[epoch]=re/(dE*N_batches)
+   139         1          2.0      2.0      0.0              res.append(re/(dE*N_batches))
+   140         1          2.0      2.0      0.0              g.TrainParams.lastEpoch=epoch
+   141         1          2.0      2.0      0.0              if epoch==N_epochs:
+   142                                                           g.TrainParams.TrainingCompleted=True
+   143                                                       
+   144                                               #         tt=tic
+   145                                               #         mFile.WeightHistory(epoch/dE,1)=struct('W',g.allW,'Bh',g.allBh,'Bv',g.allBv,'Res',res(epoch),'Epoch',epoch);
+   146                                               #         mFile.res=res;
+   147                                               #         save(SaveNameTmp,'g');
+   148                                               #         toc(tt)
+   149                                                       
+   150                                               #         tCurr=toc;
+   151                                               #         disp(['V ' Ver ', epoch ' num2str(epoch)])
+   152                                               #         toc
+   153                                               #         disp([num2str(N_batches*N_vects*dE/((tCurr-tocOld))) ' vectors per second'])
+   154                                               #         tocOld=tCurr;
+   155                                                       
+   156         1       5012.0   5012.0      0.6              g.showPars(0)
+   157                                                       
+   158         1      80856.0  80856.0      9.0              plt.figure(3)
+   159         1      38024.0  38024.0      4.2              plt.plot(res)
+   160         1         67.0     67.0      0.0              plt.xlabel('epoch')
+   161         1        277.0    277.0      0.0              plt.title('log likelihood')
+
