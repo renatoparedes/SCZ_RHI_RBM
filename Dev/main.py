@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 # profile = line_profiler.LineProfiler()
 
 from GRBM import *
-
+@profile
 def main():
     pCouple=0
     NV=[2500,150,30] #number of visible units
@@ -25,8 +25,8 @@ def main():
 
     neuronInfo[2].n=NV[2]
 
-    N_epochs=16 #160
-    N_batches=40 #400
+    N_epochs=1 #160
+    N_batches=2 #400
 
     N_vects=100
     total_annealing=1
@@ -111,7 +111,7 @@ def main():
             v=np.random.poisson(mu)
             
             #up
-            gv=w@v+bh
+            gv=w@v+bh;
             mu=1.0 / (1.0+np.exp(-gv)) # TODO float
             mu=mu.T
             rr=np.random.rand(*np.shape(mu))
