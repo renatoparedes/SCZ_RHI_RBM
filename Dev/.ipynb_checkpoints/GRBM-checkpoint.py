@@ -330,7 +330,7 @@ class grbm: # handle class, beware
             if np.size(wcurr)>2:
                 order=np.argsort(np.nanmean(wcurr[0][2].W,1))
             else:
-                order=np.arange(np.shape(wcurr[0].W,0))
+                order=np.arange(np.shape(wcurr[0].W,0));
             
             for i in np.arange(nr):
                 for j in np.arange(nc):
@@ -352,7 +352,7 @@ class grbm: # handle class, beware
             return wcurr,order
         
         def showState(self): # done
-            count=0
+            count=0;
             fig, axs = plt.subplots(1,np.sum((np.size(self.NV),np.size(self.NH))))
             for ind in np.arange(np.size(self.NV)):
                 count=count+1
@@ -370,7 +370,7 @@ class grbm: # handle class, beware
             fig.subplots_adjust(wspace=1)
             
         def getPosition(self): #done
-            pos=[]
+            pos=[];
             for pv in np.arange(self.Npv):
                 if np.size(self.NeuronInfo[pv].n)==2:
                     wx,wy=np.meshgrid(np.arange(self.NeuronInfo[pv].n[0],dtype=float),np.arange(self.NeuronInfo[pv].n[1],dtype=float))
@@ -423,14 +423,14 @@ def stimgen(pBc,pH,neuronInfo,gains): #done
 
     #body centered
     g1=gains[0] # chose gain 
-    [xg,yg]=np.meshgrid(np.arange(neuronInfo[0].n[0],dtype=float)+1.0,np.arange(neuronInfo[0].n[1],dtype=float)+1.0) #grid of coordinates
+    [xg,yg]=np.meshgrid(np.arange(neuronInfo[0].n[0],dtype=float)+1,np.arange(neuronInfo[0].n[1],dtype=float)+1) #grid of coordinates
     pos=posToInd(pBc,neuronInfo[0])
     Bc=g1*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[0].tc**2))#.T
     Bc=Bc.flatten()
     
     #hand
     g2=gains[1] # chose gain according to Makin & Sabes 2015
-    [xg,yg]=np.meshgrid(np.arange(neuronInfo[1].n[0],dtype=float)+1.0,np.arange(neuronInfo[1].n[1],dtype=float)+1.0)
+    [xg,yg]=np.meshgrid(np.arange(neuronInfo[1].n[0],dtype=float)+1,np.arange(neuronInfo[1].n[1],dtype=float)+1)
     pos=posToInd(pH,neuronInfo[1])
     H=g2*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[1].tc**2))#.T
     H=H.flatten()
