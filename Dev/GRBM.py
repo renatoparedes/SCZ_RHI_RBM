@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import string
 
 class structtype():
     pass
@@ -134,16 +136,16 @@ class grbm: # handle class, beware
             w=self.allW()
             bh=self.allBh()
             gv=w@v+bh
-            mu=1/(1+np.exp(-gv))
-            rr=np.random.rand(np.size(mu.transpose()))
-            h=1*(rr<mu.transpose()).transpose()
+            mu=1.0/(1.0+np.exp(-gv))
+            rr=np.random.rand(*np.shape(mu.T)) #beware, before was np.size
+            h=1.0*(rr<mu.T).T
             return h,mu
         
         #compute hidden layer given visible units
         def fastDown(self,h): #done 
             w=self.allW()
             bv=self.allBv()
-            gv=w.transpose()@h+bv
+            gv=w.T@h+bv
             mu=np.exp(gv)
             v=np.random.poisson(mu)
             return v,mu
@@ -254,7 +256,7 @@ class grbm: # handle class, beware
         
         
         def energy(self): #done
-            e=-self.allH().transpose()@self.allW()@self.allV()+np.sum(np.multiply(self.allV(),self.allBv()))-np.sum(np.multiply(self.allH(),self.allBh()))
+            e=-self.allH().T@self.allW()@self.allV()+np.sum(np.multiply(self.allV(),self.allBv()))-np.sum(np.multiply(self.allH(),self.allBh()))
             return e
         
         def logLikWrong(self): #done
@@ -290,14 +292,14 @@ class grbm: # handle class, beware
             for i in np.arange(nsteps):
                 self.setV(batch[:,i])
                 self.up()
-                dW=dW+(self.allV()@self.allH().transpose()).transpose()
+                dW=dW+(self.allV()@self.allH().T).T
                 dBv=dBv+self.allV()
                 dBh=dBh+self.allH()
                 
                 self.down()
                 self.up() 
                 
-                dW=dW-(self.allV()@self.allH().transpose()).transpose()
+                dW=dW-(self.allV()@self.allH().T).T
                 dBv=dBv-self.allV()
                 dBh=dBh-self.allH()
         
