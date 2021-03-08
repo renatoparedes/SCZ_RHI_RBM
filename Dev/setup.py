@@ -21,8 +21,8 @@ neuronInfo[1].tc=1 #tuning curve width (neurons)
 
 neuronInfo[2].n=NV[2]
 
-N_epochs=16 #160
-N_batches=40 #400
+N_epochs=160 #160
+N_batches=400 #400
 
 N_vects=100
 total_annealing=1
