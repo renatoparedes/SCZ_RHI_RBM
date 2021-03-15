@@ -16,51 +16,50 @@ for epoch in range(N_epochs):
         #generate stimuli
         for i in range(N_vects):
             pH= np.multiply(g.NeuronInfo[1].min+(g.NeuronInfo[1].max-g.NeuronInfo[1].min),*np.random.rand(1,2))
-            #double check H and stimgen function for H
+            
             if np.random.rand()>pCouple:
                 pBc=g.NeuronInfo[0].min-.15+ np.multiply((.3+g.NeuronInfo[0].max-g.NeuronInfo[0].min),*np.random.rand(1,2))
             else:
                 pBc=pH+.15*np.random.normal(1,2)
             gains=4+6*np.random.rand(3,1)
             Bc,H,T=stimgen(pBc,pH,g.NeuronInfo,gains)
-            #stimsA[:,i]=np.concatenate((np.hstack(Bc),np.hstack(H),np.hstack(T)))
-            stims[:,i]=np.concatenate((Bc, H, T), axis=None) # TODO faster concatenate
-
-        stims=np.random.poisson(stims)
-           
+            stims[:,i]=np.concatenate((Bc, H, T), axis=None)
+        
+        stims=np.random.poisson(lam=stims)
+   
         #one-step contrastive divergence, done for all stimuli in a batch
         #at once for efficiency
         #up
         gv=w@stims+bh
-        mu=1.0 / (1.0+np.exp(-gv)) # TODO float
+        mu=1.0 / (1.0+np.exp(-gv)) 
         mu=mu.T
         rr=np.random.rand(*np.shape(mu))
-        h=1.0*(rr<mu).T # TODO keep as float by changing to 1.0
+        h=1.0*(rr<mu).T
             
-        dW=h@stims.T  # TODO keep everything as float
-        dBv=np.sum(stims,1)
-        dBh=np.sum(h,1)
-            
+        dW=h@stims.T  
+        dBv=np.sum(stims,axis=1,keepdims=True)
+        dBh=np.sum(h,axis=1,keepdims=True)
+
         #down
         gv=w.T@h+bv
         mu=np.exp(gv)
-        v=np.random.poisson(mu)
+        v=np.random.poisson(lam=mu)
             
         #up
         gv=w@v+bh
-        mu=1.0 / (1.0+np.exp(-gv)) # TODO float
+        mu=1.0 / (1.0+np.exp(-gv)) 
         mu=mu.T
         rr=np.random.rand(*np.shape(mu))
-        h=1.0*(rr<mu).T # TODO  float
+        h=1.0*(rr<mu).T
             
-        dW=dW-h@v.T # TODO float
-        dBv=dBv-np.sum(v,1)
-        dBh=dBh-np.sum(h,1)
+        dW=dW-h@v.conj().T
+        dBv=dBv-np.sum(v,axis=1,keepdims=True)
+        dBh=dBh-np.sum(h,axis=1,keepdims=True)
             
         #update weights and biases
         w=w+eta*dW
-        bv=bv+eta*dBv.reshape((2680,1))
-        bh=bh+eta*dBh.reshape((1500,1))
+        bv=bv+eta*dBv
+        bh=bh+eta*dBh
             
     #end of epoch
     #update weights in the rbm object

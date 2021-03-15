@@ -53,8 +53,6 @@ class grbm: # handle class, beware
                 self.H[ph].B=np.zeros((self.NH[ph],1))
                 self.H[ph].T=th[ph]
             
-            # TODO this can probably be speed up by removing 
-            # loops and by vectorizing the code 
             for pv in np.arange(self.Npv):
                 for ph in np.arange(self.Nph):
                     self.W[ph][pv].W= np.random.normal(0,1,size=(self.NH[ph],self.NV[pv])) / np.sum(self.NH) #%%%%normalization has to be checked! BEWARE!
@@ -280,39 +278,12 @@ class grbm: # handle class, beware
             l=l+np.sum(np.multiply(self.allV(),self.allBv()))-e
             return l
         
-        #train using contrastive divergence on a [nsteps,NV] batch where
-        #nsteps is the number of vectors of the batch and NV the total
-        #number of visible units
-        
-        def train(self,batch,eta): #not used
-            [null, nsteps]=np.shape(batch)
-            dW=0*self.allW()
-            dBv=0*self.allBv()
-            dBh=0*self.allBh()
-            for i in np.arange(nsteps):
-                self.setV(batch[:,i])
-                self.up()
-                dW=dW+(self.allV()@self.allH().T).T
-                dBv=dBv+self.allV()
-                dBh=dBh+self.allH()
-                
-                self.down()
-                self.up() 
-                
-                dW=dW-(self.allV()@self.allH().T).T
-                dBv=dBv-self.allV()
-                dBh=dBh-self.allH()
-        
-            self.setW(self.allW()+eta*dW)
-            self.setBv(self.allBv()+eta*dBv)
-            self.setBh(self.allBh()+eta*dBh)
-        
         #show the parameters
         def showPars(self,Plot): #done
             if Plot:
                 plt.figure(1)
                 count=0
-                fig, axs = plt.subplots(1,np.sum((np.size(self.NV),np.size(self.NH))))
+                fig, axs = plt.subplots(1,np.sum((np.size(self.NV),np.size(self.NH))),figsize=(18, 9))
                 for ind in np.arange(np.size(self.NV)):
                     count=count+1
                     axs[count-1].plot(self.V[ind].B)
@@ -322,7 +293,7 @@ class grbm: # handle class, beware
                     count=count+1
                     axs[count-1].plot(self.H[ind].B)
                     axs[count-1].set_title('bias\n' + self.Names.H[ind])
-                fig.subplots_adjust(wspace=1.25)
+                fig.subplots_adjust(wspace=1)
            
             nr, nc=np.shape(self.W)
             count=0
@@ -340,17 +311,17 @@ class grbm: # handle class, beware
             
             if Plot:
                 plt.figure(2)
-                fig2, axs2 = plt.subplots(nr,nc)        
+                fig2, axs2 = plt.subplots(nr,nc,figsize=(18, 9))        
                 for i in np.arange(nr):
                     for j in np.arange(nc):
                         count=count+1
                         ww=wcurr[i][j].W
-                        im=axs2[count-1].imshow(ww,aspect="auto") 
+                        im=axs2[count-1].imshow(ww,aspect='auto') 
                         axs2[count-1].set_title(self.Names.V[j]+'\n'+self.Names.H[i])
                         divider = make_axes_locatable(axs2[count-1])
                         cax = divider.append_axes("right", "10%", pad="3%")
                         fig2.colorbar(im, cax=cax)
-                fig2.subplots_adjust(wspace=2)
+                fig2.subplots_adjust(wspace=1)
             return wcurr,order
         
         def showState(self): # done
@@ -425,16 +396,17 @@ def stimgen(pBc,pH,neuronInfo,gains): #done
 
     #body centered
     g1=gains[0] # chose gain 
-    [xg,yg]=np.meshgrid(np.arange(neuronInfo[0].n[0],dtype=float)+1.0,np.arange(neuronInfo[0].n[1],dtype=float)+1.0) #grid of coordinates
+    xg,yg=np.meshgrid(np.arange(neuronInfo[0].n[0],dtype=float)+1.0,np.arange(neuronInfo[0].n[1],dtype=float)+1.0) #grid of coordinates
     pos=posToInd(pBc,neuronInfo[0])
-    Bc=g1*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[0].tc**2))#.T
+    Bc=g1*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[0].tc**2))
     Bc=Bc.flatten()
     
+
     #hand
     g2=gains[1] # chose gain according to Makin & Sabes 2015
-    [xg,yg]=np.meshgrid(np.arange(neuronInfo[1].n[0],dtype=float)+1.0,np.arange(neuronInfo[1].n[1],dtype=float)+1.0)
+    xg,yg=np.meshgrid(np.arange(neuronInfo[1].n[0],dtype=float)+1.0,np.arange(neuronInfo[1].n[1],dtype=float)+1.0)
     pos=posToInd(pH,neuronInfo[1])
-    H=g2*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[1].tc**2))#.T
+    H=g2*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[1].tc**2))
     H=H.flatten()
     
     pHc=pBc-pH #hand centered position
