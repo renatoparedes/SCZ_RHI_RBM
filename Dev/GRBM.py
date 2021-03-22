@@ -97,16 +97,16 @@ class grbm: # handle class, beware
             for ph in np.arange(self.Nph):
                 if np.char.equal(self.H[ph].T,'bern'):
                     gv=self.WUp[ph].W@self.VUp+self.H[ph].B
-                    mu=1/(1+np.exp(-gv))
-                    mu=np.transpose(mu)
+                    mu=1.0/(1.0+np.exp(-gv))
+                    mu=mu.T
                     rr=np.random.rand(1,self.NH[ph])
-                    self.H[ph].S=1*np.transpose(rr<mu)
-                    self.H[ph].MU=np.transpose(mu)
+                    self.H[ph].S=1.0*(rr<mu).conj().T
+                    self.H[ph].MU=mu.T
                 elif np.char.equal(self.H[ph].T,'poiss'):
                     gv=self.WUp[ph].W@self.VUp+self.H[ph].B
                     mu=np.exp(gv)
                     self.H[ph].S=np.random.poisson(mu)
-                    self.H[ph].MU=np.transpose(mu)
+                    self.H[ph].MU=mu.T
                     
         # compute visible layer given hidden units
         def down(self): #done
@@ -117,17 +117,17 @@ class grbm: # handle class, beware
             
             for pv in np.arange(self.Npv):
                 if np.char.equal(self.V[pv].T,'bern'):
-                    gv=np.transpose(self.WDown[pv].W)@self.VDown+self.V[pv].B
-                    mu=1/(1+np.exp(-gv))
-                    mu=np.transpose(mu)
+                    gv=self.WDown[pv].W.T@self.VDown+self.V[pv].B
+                    mu=1.0/(1.0+np.exp(-gv))
+                    mu=mu.T
                     rr=np.random.rand(1,self.NV[pv])
-                    self.V[pv].S=1*np.transpose(rr<mu)
-                    self.V[pv].MU=np.transpose(mu)
+                    self.V[pv].S=1.0*(rr<mu).conj().T
+                    self.V[pv].MU=mu.T
                 elif np.char.equal(self.V[pv].T,'poiss'):
-                    gv=np.transpose(self.WDown[pv].W)@self.VDown+self.V[pv].B
+                    gv=self.WDown[pv].W.T@self.VDown+self.V[pv].B
                     mu=np.exp(gv)
                     self.V[pv].S=np.random.poisson(mu)
-                    self.V[pv].MU=np.transpose(mu)
+                    self.V[pv].MU=mu.T
                     
         #compute hidden layer given visible units via fast matrix multiplication
         def fastUp(self,v): #done 
@@ -136,7 +136,7 @@ class grbm: # handle class, beware
             gv=w@v+bh
             mu=1.0/(1.0+np.exp(-gv))
             rr=np.random.rand(*np.shape(mu.T)) #beware, before was np.size
-            h=1.0*(rr<mu.T).T
+            h=1.0*(rr<mu.T).conj().T
             return h,mu
         
         #compute hidden layer given visible units
@@ -254,7 +254,7 @@ class grbm: # handle class, beware
         
         
         def energy(self): #done
-            e=-self.allH().T@self.allW()@self.allV()+np.sum(np.multiply(self.allV(),self.allBv()))-np.sum(np.multiply(self.allH(),self.allBh()))
+            e=-self.allH().conj().T@self.allW()@self.allV()+np.sum(np.multiply(self.allV(),self.allBv()))-np.sum(np.multiply(self.allH(),self.allBh()))
             return e
         
         def logLikWrong(self): #done
@@ -380,7 +380,7 @@ def posToInd(pos,neuronInfo):
 def stimgen(pBc,pH,neuronInfo,gains): #done
 # INPUT:
 # pBc: stimulus position in body centered coordinates
-# pH: stimulus position in body centered coordinates
+# pH: stimulus position in hand centered coordinates
 # neuronInfo: structure containing info about tuning curves, number of
 # neurons etc for various populations. It is one of the properties of an RBM
 # object
@@ -401,7 +401,6 @@ def stimgen(pBc,pH,neuronInfo,gains): #done
     Bc=g1*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[0].tc**2))
     Bc=Bc.flatten()
     
-
     #hand
     g2=gains[1] # chose gain according to Makin & Sabes 2015
     xg,yg=np.meshgrid(np.arange(neuronInfo[1].n[0],dtype=float)+1.0,np.arange(neuronInfo[1].n[1],dtype=float)+1.0)
@@ -411,8 +410,8 @@ def stimgen(pBc,pH,neuronInfo,gains): #done
     
     pHc=pBc-pH #hand centered position
     g3=gains[2]
-    d=np.linalg.norm(pHc) #distance from hand
-    elambda = 1.0 -np.exp(slope*(d-dCp))/(1.0 +np.exp(slope*(d-dCp)))
+    d=np.linalg.norm(pHc,2) #distance from hand
+    elambda = 1.0 -np.exp(slope*(d-dCp))/(1.0 +np.exp(slope*(d-dCp))) 
     if np.isnan(elambda): elambda=0
         
     #tactile population

@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from GRBM import *
+from scipy import stats
 
 pCouple=0
 NV=[2500,150,30] #number of visible units
