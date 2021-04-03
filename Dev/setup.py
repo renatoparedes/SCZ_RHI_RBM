@@ -31,7 +31,9 @@ Cp=N_epochs/8
 Slope=N_epochs/20
 dE=1 #plot and save every dE epochs
 eta=5e-6###this value of eta hasn't been optimized, but it's more or less OK
-etas=((eta/total_annealing)+eta*np.exp(-((np.arange(N_epochs))-Cp)/Slope))/(1+np.exp(-((np.arange(N_epochs))-Cp)/Slope))-np.linspace(0,eta/total_annealing,N_epochs)
+#etas=((eta/total_annealing)+eta*np.exp(-((np.arange(N_epochs))-Cp)/Slope))/(1+np.exp(-((np.arange(N_epochs))-Cp)/Slope))-np.linspace(0,eta/total_annealing,N_epochs)
+etas=((eta/total_annealing)+eta*np.exp(-((np.arange(N_epochs)+1)-Cp)/Slope))/(1+np.exp(-((np.arange(N_epochs)+1)-Cp)/Slope))-np.linspace(0,eta/total_annealing,N_epochs)
+#double check etas
 tocOld=0
 
 Names = structtype()

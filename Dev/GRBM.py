@@ -55,13 +55,14 @@ class grbm: # handle class, beware
             
             for pv in np.arange(self.Npv):
                 for ph in np.arange(self.Nph):
-                    self.W[ph][pv].W= np.random.normal(0,1,size=(self.NH[ph],self.NV[pv])) / np.sum(self.NH) #%%%%normalization has to be checked! BEWARE!
+                    self.W[ph][pv].W= np.random.normal(0,1,size=(self.NH[ph],self.NV[pv])) / np.sum(self.NH) # normalization has to be checked! BEWARE!
             for ph in np.arange(self.Nph):
                 ww=0.01*np.random.normal(0,1,size=(self.NH[ph],np.sum(self.NV)))
                 vv=np.zeros((np.sum(self.NV),1))
                 inds=np.insert(np.cumsum(self.NV),0,0)
                 for pv in np.arange(self.Npv):
                     currInds=np.arange(inds[pv],inds[pv+1])
+                    #currInds=np.arange(inds[pv]+1,inds[pv+1]+1)
                     ww[:,currInds]=self.W[ph][pv].W #%matrix acting on the subpopulation ph
                     vv[currInds]=self.V[pv].S  #%global visible activity
                     
@@ -74,6 +75,7 @@ class grbm: # handle class, beware
                 inds=np.insert(np.cumsum(self.NH),0,0)
                 for ph in np.arange(self.Nph):
                     currInds=np.arange(inds[ph],inds[ph+1])
+                    #currInds=np.arange(inds[ph],inds[ph+1]+1)
                     ww[currInds,:]=self.W[ph][pv].W #%matrix acting on the subpopulation pv
                     hh[currInds]=self.H[ph].S    #%global hidden activity
         
@@ -91,43 +93,45 @@ class grbm: # handle class, beware
         def up(self): #done
             inds=np.insert(np.cumsum(self.NV),0,0)
             for pv in np.arange(self.Npv):
-                currInds=np.arange(inds[pv],inds[pv+1])
+                #currInds=np.arange(inds[pv],inds[pv+1])
+                currInds=np.arange(inds[pv],inds[pv+1]+1)
                 self.VUp[currInds]=self.V[pv].S    #global visible activity
             
             for ph in np.arange(self.Nph):
                 if np.char.equal(self.H[ph].T,'bern'):
                     gv=self.WUp[ph].W@self.VUp+self.H[ph].B
                     mu=1.0/(1.0+np.exp(-gv))
-                    mu=mu.T
+                    mu=mu.conj().T
                     rr=np.random.rand(1,self.NH[ph])
                     self.H[ph].S=1.0*(rr<mu).conj().T
-                    self.H[ph].MU=mu.T
+                    self.H[ph].MU=mu.conj().T
                 elif np.char.equal(self.H[ph].T,'poiss'):
                     gv=self.WUp[ph].W@self.VUp+self.H[ph].B
                     mu=np.exp(gv)
                     self.H[ph].S=np.random.poisson(mu)
-                    self.H[ph].MU=mu.T
+                    self.H[ph].MU=mu.conj().T
                     
         # compute visible layer given hidden units
         def down(self): #done
             inds=np.insert(np.cumsum(self.NH),0,0)
             for ph in np.arange(self.Nph):
-                currInds=np.arange(inds[ph],inds[ph+1])
+                #currInds=np.arange(inds[ph],inds[ph+1])
+                currInds=np.arange(inds[ph],inds[ph+1]+1)
                 self.VDown[currInds]=self.H[ph].S; #global hidden activity
             
             for pv in np.arange(self.Npv):
                 if np.char.equal(self.V[pv].T,'bern'):
-                    gv=self.WDown[pv].W.T@self.VDown+self.V[pv].B
+                    gv=self.WDown[pv].W.conj().T@self.VDown+self.V[pv].B
                     mu=1.0/(1.0+np.exp(-gv))
-                    mu=mu.T
+                    mu=mu.conj().T
                     rr=np.random.rand(1,self.NV[pv])
                     self.V[pv].S=1.0*(rr<mu).conj().T
-                    self.V[pv].MU=mu.T
+                    self.V[pv].MU=mu.conj().T
                 elif np.char.equal(self.V[pv].T,'poiss'):
-                    gv=self.WDown[pv].W.T@self.VDown+self.V[pv].B
+                    gv=self.WDown[pv].W.conj().T@self.VDown+self.V[pv].B
                     mu=np.exp(gv)
                     self.V[pv].S=np.random.poisson(mu)
-                    self.V[pv].MU=mu.T
+                    self.V[pv].MU=mu.conj().T
                     
         #compute hidden layer given visible units via fast matrix multiplication
         def fastUp(self,v): #done 
@@ -135,15 +139,15 @@ class grbm: # handle class, beware
             bh=self.allBh()
             gv=w@v+bh
             mu=1.0/(1.0+np.exp(-gv))
-            rr=np.random.rand(*np.shape(mu.T)) #beware, before was np.size
-            h=1.0*(rr<mu.T).conj().T
+            rr=np.random.rand(*np.shape(mu.conj().T)) #beware, before was np.size
+            h=1.0*(rr<mu.conj().T).conj().T
             return h,mu
         
         #compute hidden layer given visible units
         def fastDown(self,h): #done 
             w=self.allW()
             bv=self.allBv()
-            gv=w.T@h+bv
+            gv=w.conj().T@h+bv
             mu=np.exp(gv)
             v=np.random.poisson(mu)
             return v,mu
@@ -154,14 +158,16 @@ class grbm: # handle class, beware
         def setV(self,ninput): 
             inind=0
             for pv in np.arange(self.Npv):
-                self.V[pv].S=ninput[np.arange(inind,inind+self.NV[pv])]
+                #self.V[pv].S=ninput[np.arange(inind,inind+self.NV[pv])]
+                self.V[pv].S=ninput[inind:inind+self.NV[pv]]
                 inind=inind+self.NV[pv]
         
         #set hidden unit state from a single activity vector including all hidden subpopulations
         def setH(self,ninput):  
             inind=0
             for ph in np.arange(self.Nph):
-                self.H[ph].S=ninput[np.arange(inind,inind+self.NH[ph])]
+                #self.H[ph].S=ninput[np.arange(inind,inind+self.NH[ph])]
+                self.H[ph].S=ninput[inind:inind+self.NH[ph]]
                 inind=inind+self.NH[ph]
            
         #set individual subpopulation weight matrix from a global weight matrix
@@ -180,6 +186,7 @@ class grbm: # handle class, beware
                 inds=np.insert(np.cumsum(self.NV),0,0)
                 for pv in np.arange(self.Npv):
                     currInds=np.arange(inds[pv],inds[pv+1])
+                    #currInds=np.arange(inds[pv],inds[pv+1]+1)
                     ww[:,currInds]=self.W[ph][pv].W #matrix acting on the subpopulation ph
                     vv[currInds]=self.V[pv].S    #global visible activity
             
@@ -192,6 +199,7 @@ class grbm: # handle class, beware
                 inds=np.insert(np.cumsum(self.NH),0,0)
                 for ph in np.arange(self.Nph):
                     currInds=np.arange(inds[ph],inds[ph+1])
+                    #currInds=np.arange(inds[ph],inds[ph+1]+1)
                     ww[currInds,:]=self.W[ph][pv].W #matrix acting on the subpopulation pv
                     hh[currInds]=self.H[ph].S    #global hidden activity
                 
@@ -303,8 +311,9 @@ class grbm: # handle class, beware
             if np.size(wcurr)>2:
                 order=np.argsort(np.nanmean(wcurr[0][2].W,1))
             else:
-                order=np.arange(np.shape(wcurr[0].W,0))
-            
+                #order=np.arange(np.shape(wcurr[0].W,0))
+                order=np.arange(np.shape(wcurr[0].W,0)+1)
+
             for i in np.arange(nr):
                 for j in np.arange(nc):
                     wcurr[i][j].W=wcurr[i][j].W[order,:]
@@ -366,13 +375,15 @@ class grbm: # handle class, beware
 
 # compute position in meters given position in neuron units
 def indToPos(ind,neuronInfo):
-    pos=(neuronInfo.center-neuronInfo.span/2)+np.multiply((np.array(ind)-1),neuronInfo.span)/(neuronInfo.n-1)
+    #pos=(neuronInfo.center-neuronInfo.span/2)+np.multiply((np.array(ind)-1),neuronInfo.span)/(neuronInfo.n-1)
+    pos=(neuronInfo.center-neuronInfo.span/2)+np.multiply((np.array(ind)),neuronInfo.span)/(neuronInfo.n-1)
     return pos
 
 # compute position in neuron units given position in meters
 def posToInd(pos,neuronInfo):
-    ind=1+np.multiply((neuronInfo.n-1),(pos-neuronInfo.center+neuronInfo.span/2))/neuronInfo.span
-    #ind=1+(neuronInfo.n-1).*(pos-neuronInfo.center+neuronInfo.span/2)./neuronInfo.span;
+    #ind=1+np.multiply((neuronInfo.n-1),(pos-neuronInfo.center+neuronInfo.span/2))/neuronInfo.span
+    ind=np.multiply((neuronInfo.n-1),(pos-neuronInfo.center+neuronInfo.span/2))/neuronInfo.span
+    #ind=1+(neuronInfo.n-1).*(pos-neuronInfo.center+neuronInfo.span/2)./neuronInfo.span -> Matlab
     return ind
 
 
@@ -396,25 +407,28 @@ def stimgen(pBc,pH,neuronInfo,gains): #done
 
     #body centered
     g1=gains[0] # chose gain 
-    xg,yg=np.meshgrid(np.arange(neuronInfo[0].n[0],dtype=float)+1.0,np.arange(neuronInfo[0].n[1],dtype=float)+1.0) #grid of coordinates
+    #xg,yg=np.meshgrid(np.arange(neuronInfo[0].n[0],dtype=float)+1.0,np.arange(neuronInfo[0].n[1],dtype=float)+1.0) #grid of coordinates
+    xg,yg=np.meshgrid(np.arange(neuronInfo[0].n[0],dtype=float),np.arange(neuronInfo[0].n[1],dtype=float))
     pos=posToInd(pBc,neuronInfo[0])
     Bc=g1*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[0].tc**2))
     Bc=Bc.flatten()
     
     #hand
     g2=gains[1] # chose gain according to Makin & Sabes 2015
-    xg,yg=np.meshgrid(np.arange(neuronInfo[1].n[0],dtype=float)+1.0,np.arange(neuronInfo[1].n[1],dtype=float)+1.0)
+    #xg,yg=np.meshgrid(np.arange(neuronInfo[1].n[0],dtype=float)+1.0,np.arange(neuronInfo[1].n[1],dtype=float)+1.0)
+    xg,yg=np.meshgrid(np.arange(neuronInfo[1].n[0],dtype=float),np.arange(neuronInfo[1].n[1],dtype=float))
     pos=posToInd(pH,neuronInfo[1])
     H=g2*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[1].tc**2))
     H=H.flatten()
     
     pHc=pBc-pH #hand centered position
     g3=gains[2]
-    d=np.linalg.norm(pHc,2) #distance from hand
+    d=np.linalg.norm(pHc) #,2) #distance from hand
     elambda = 1.0 -np.exp(slope*(d-dCp))/(1.0 +np.exp(slope*(d-dCp))) 
     if np.isnan(elambda): elambda=0
         
     #tactile population
-    T=g3*elambda*np.ones((neuronInfo[2].n,1))
-    
+    #T=g3*elambda*np.ones((neuronInfo[2].n,1))
+    T=g3*elambda*np.ones(neuronInfo[2].n)
+
     return Bc, H, T

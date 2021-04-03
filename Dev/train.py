@@ -1,7 +1,7 @@
 stims=np.zeros((np.sum(g.NV),N_vects), dtype=np.float)
 hiddenState=np.zeros((g.NH[0],N_vects))
 
-for epoch in range(N_epochs):
+for epoch in np.arange(N_epochs):
     re=0
     g.TrainParams.TrainingCompleted=False
     countb=0
@@ -12,15 +12,19 @@ for epoch in range(N_epochs):
     bh=g.allBh()
     bv=g.allBv()
         
-    for batch in range(N_batches): #a batch is made by N_vects individual stimuli
+    for batch in np.arange(N_batches): #a batch is made by N_vects individual stimuli
         #generate stimuli
-        for i in range(N_vects):
-            pH=np.multiply(g.NeuronInfo[1].min+(g.NeuronInfo[1].max-g.NeuronInfo[1].min),*np.random.rand(1,2))
+        for i in np.arange(N_vects):
+            #pH=np.multiply(g.NeuronInfo[1].min+(g.NeuronInfo[1].max-g.NeuronInfo[1].min),*np.random.rand(1,2))
+            pH=np.multiply(g.NeuronInfo[1].min+(g.NeuronInfo[1].max-g.NeuronInfo[1].min),np.random.rand(2))
             if np.random.rand()>pCouple:
-                pBc=g.NeuronInfo[0].min-.15+ np.multiply((.3+g.NeuronInfo[0].max-g.NeuronInfo[0].min),*np.random.rand(1,2))
+                #pBc=g.NeuronInfo[0].min-.15+ np.multiply((.3+g.NeuronInfo[0].max-g.NeuronInfo[0].min),*np.random.rand(1,2))
+                pBc=g.NeuronInfo[0].min-.15+ np.multiply((.3+g.NeuronInfo[0].max-g.NeuronInfo[0].min),np.random.rand(2))
             else:
-                pBc=pH+.15*np.random.normal(1,2)
-            gains=4+6*np.random.rand(3,1)
+                #pBc=pH+.15*np.random.normal(1,2)
+                pBc=pH+.15*np.random.normal(2)
+            #gains=4+6*np.random.rand(3,1)
+            gains=4+6*np.random.rand(3)
             Bc,H,T=stimgen(pBc,pH,g.NeuronInfo,gains)
             stims[:,i]=np.concatenate((Bc, H, T), axis=None)
         
