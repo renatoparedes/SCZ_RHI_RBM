@@ -57,10 +57,10 @@ class grbm: # handle class, beware
             
             for pv in np.arange(self.Npv):
                 for ph in np.arange(self.Nph):
-                    np.random.seed(255)
+                    #np.random.seed(255)
                     self.W[ph][pv].W = norm.ppf(np.random.rand(self.NV[pv],self.NH[ph]).T) / np.sum(self.NH) # normalization has to be checked! BEWARE!s
             for ph in np.arange(self.Nph):
-                np.random.seed(255)
+                #np.random.seed(255)
                 ww=0.01*norm.ppf(np.random.rand(np.sum(self.NV),self.NH[ph]).T)
                 vv=np.zeros((np.sum(self.NV),1))
                 inds=np.insert(np.cumsum(self.NV),0,0)
@@ -73,7 +73,7 @@ class grbm: # handle class, beware
                 self.VUp=vv
             
             for pv in np.arange(self.Npv):
-                np.random.seed(255)
+                #np.random.seed(255)
                 ww=0.01*norm.ppf(np.random.rand(self.NV[pv],np.sum(self.NH)).T)
                 hh=np.zeros((np.sum(self.NH),1))
                 inds=np.insert(np.cumsum(self.NH),0,0)
