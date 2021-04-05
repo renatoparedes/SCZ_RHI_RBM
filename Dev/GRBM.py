@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import string
+from scipy import stats
+from scipy.stats import norm
 
 class structtype():
     pass
@@ -55,29 +57,30 @@ class grbm: # handle class, beware
             
             for pv in np.arange(self.Npv):
                 for ph in np.arange(self.Nph):
-                    self.W[ph][pv].W= np.random.normal(0,1,size=(self.NH[ph],self.NV[pv])) / np.sum(self.NH) # normalization has to be checked! BEWARE!
+                    np.random.seed(255)
+                    self.W[ph][pv].W = norm.ppf(np.random.rand(self.NV[pv],self.NH[ph]).T) / np.sum(self.NH) # normalization has to be checked! BEWARE!s
             for ph in np.arange(self.Nph):
-                ww=0.01*np.random.normal(0,1,size=(self.NH[ph],np.sum(self.NV)))
+                np.random.seed(255)
+                ww=0.01*norm.ppf(np.random.rand(np.sum(self.NV),self.NH[ph]).T)
                 vv=np.zeros((np.sum(self.NV),1))
                 inds=np.insert(np.cumsum(self.NV),0,0)
                 for pv in np.arange(self.Npv):
                     currInds=np.arange(inds[pv],inds[pv+1])
-                    #currInds=np.arange(inds[pv]+1,inds[pv+1]+1)
-                    ww[:,currInds]=self.W[ph][pv].W #%matrix acting on the subpopulation ph
-                    vv[currInds]=self.V[pv].S  #%global visible activity
+                    ww[:,currInds]=self.W[ph][pv].W #matrix acting on the subpopulation ph
+                    vv[currInds]=self.V[pv].S  #global visible activity
                     
                 self.WUp[ph].W=ww
                 self.VUp=vv
             
             for pv in np.arange(self.Npv):
-                ww=0.01*np.random.normal(0,1,size=(np.sum(self.NH),self.NV[pv]))
+                np.random.seed(255)
+                ww=0.01*norm.ppf(np.random.rand(self.NV[pv],np.sum(self.NH)).T)
                 hh=np.zeros((np.sum(self.NH),1))
                 inds=np.insert(np.cumsum(self.NH),0,0)
                 for ph in np.arange(self.Nph):
                     currInds=np.arange(inds[ph],inds[ph+1])
-                    #currInds=np.arange(inds[ph],inds[ph+1]+1)
-                    ww[currInds,:]=self.W[ph][pv].W #%matrix acting on the subpopulation pv
-                    hh[currInds]=self.H[ph].S    #%global hidden activity
+                    ww[currInds,:]=self.W[ph][pv].W #matrix acting on the subpopulation pv
+                    hh[currInds]=self.H[ph].S    #global hidden activity
         
                 self.WDown[pv].W=ww
                 self.VDown=hh
@@ -117,7 +120,7 @@ class grbm: # handle class, beware
             for ph in np.arange(self.Nph):
                 #currInds=np.arange(inds[ph],inds[ph+1])
                 currInds=np.arange(inds[ph],inds[ph+1]+1)
-                self.VDown[currInds]=self.H[ph].S; #global hidden activity
+                self.VDown[currInds]=self.H[ph].S #global hidden activity
             
             for pv in np.arange(self.Npv):
                 if np.char.equal(self.V[pv].T,'bern'):
@@ -158,7 +161,6 @@ class grbm: # handle class, beware
         def setV(self,ninput): 
             inind=0
             for pv in np.arange(self.Npv):
-                #self.V[pv].S=ninput[np.arange(inind,inind+self.NV[pv])]
                 self.V[pv].S=ninput[inind:inind+self.NV[pv]]
                 inind=inind+self.NV[pv]
         
@@ -166,7 +168,6 @@ class grbm: # handle class, beware
         def setH(self,ninput):  
             inind=0
             for ph in np.arange(self.Nph):
-                #self.H[ph].S=ninput[np.arange(inind,inind+self.NH[ph])]
                 self.H[ph].S=ninput[inind:inind+self.NH[ph]]
                 inind=inind+self.NH[ph]
            
@@ -186,7 +187,6 @@ class grbm: # handle class, beware
                 inds=np.insert(np.cumsum(self.NV),0,0)
                 for pv in np.arange(self.Npv):
                     currInds=np.arange(inds[pv],inds[pv+1])
-                    #currInds=np.arange(inds[pv],inds[pv+1]+1)
                     ww[:,currInds]=self.W[ph][pv].W #matrix acting on the subpopulation ph
                     vv[currInds]=self.V[pv].S    #global visible activity
             
@@ -199,7 +199,6 @@ class grbm: # handle class, beware
                 inds=np.insert(np.cumsum(self.NH),0,0)
                 for ph in np.arange(self.Nph):
                     currInds=np.arange(inds[ph],inds[ph+1])
-                    #currInds=np.arange(inds[ph],inds[ph+1]+1)
                     ww[currInds,:]=self.W[ph][pv].W #matrix acting on the subpopulation pv
                     hh[currInds]=self.H[ph].S    #global hidden activity
                 
@@ -262,8 +261,8 @@ class grbm: # handle class, beware
         
         
         def energy(self): #done
-            e=-self.allH().conj().T@self.allW()@self.allV()+np.sum(np.multiply(self.allV(),self.allBv()))-np.sum(np.multiply(self.allH(),self.allBh()))
-            return e
+            e=self.allH().conj().T@self.allW()@self.allV()+np.sum(np.multiply(self.allV(),self.allBv()))-np.sum(np.multiply(self.allH(),self.allBh()))
+            return -e
         
         def logLikWrong(self): #done
             l=0
@@ -310,9 +309,10 @@ class grbm: # handle class, beware
             wcurr=self.W
             if np.size(wcurr)>2:
                 order=np.argsort(np.nanmean(wcurr[0][2].W,1))
+                #order=np.argsort(np.nanmean(wcurr[0][2].W,1))
             else:
-                #order=np.arange(np.shape(wcurr[0].W,0))
-                order=np.arange(np.shape(wcurr[0].W,0)+1)
+                order=np.arange(np.shape(wcurr[0][0].W,0))
+                #order=np.arange(np.shape(wcurr[0][0].W,0))
 
             for i in np.arange(nr):
                 for j in np.arange(nc):
@@ -344,7 +344,8 @@ class grbm: # handle class, beware
                 im=axs[count-1].imshow(s,aspect="auto")
                 axs[count-1].set_title(self.Names.V[ind])
                   
-            order=np.argsort(np.mean(self.W[0][-1].W,1))
+            #order=np.argsort(np.mean(self.W[0][-1].W,1))
+            order=np.argsort(np.mean(self.W[0][-1],1))
             for ind in np.arange(np.size(self.NH)):
                 count=count+1
                 im=axs[count-1].imshow(self.H[ind].S[order],aspect="auto")
@@ -410,16 +411,16 @@ def stimgen(pBc,pH,neuronInfo,gains): #done
     #xg,yg=np.meshgrid(np.arange(neuronInfo[0].n[0],dtype=float)+1.0,np.arange(neuronInfo[0].n[1],dtype=float)+1.0) #grid of coordinates
     xg,yg=np.meshgrid(np.arange(neuronInfo[0].n[0],dtype=float),np.arange(neuronInfo[0].n[1],dtype=float))
     pos=posToInd(pBc,neuronInfo[0])
-    Bc=g1*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[0].tc**2))
-    Bc=Bc.flatten()
+    Bc=g1*np.exp(   (-(pos[0]-xg)**2-(pos[1]-yg)**2 ) / (2*neuronInfo[0].tc**2) ).conj().T   
+    Bc=Bc.ravel(order='F')
     
     #hand
     g2=gains[1] # chose gain according to Makin & Sabes 2015
     #xg,yg=np.meshgrid(np.arange(neuronInfo[1].n[0],dtype=float)+1.0,np.arange(neuronInfo[1].n[1],dtype=float)+1.0)
     xg,yg=np.meshgrid(np.arange(neuronInfo[1].n[0],dtype=float),np.arange(neuronInfo[1].n[1],dtype=float))
     pos=posToInd(pH,neuronInfo[1])
-    H=g2*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[1].tc**2))
-    H=H.flatten()
+    H=g2*np.exp((-(pos[0]-xg)**2-(pos[1]-yg)**2)/(2*neuronInfo[1].tc**2)).conj().T
+    H=H.ravel(order='F')
     
     pHc=pBc-pH #hand centered position
     g3=gains[2]
@@ -432,3 +433,121 @@ def stimgen(pBc,pH,neuronInfo,gains): #done
     T=g3*elambda*np.ones(neuronInfo[2].n)
 
     return Bc, H, T
+
+
+def bindata2d(x,y,z,nbins):
+    #https://stackoverflow.com/questions/55874812/what-is-a-joint-histogram-and-a-marginal-histogram-in-image-processing
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.binned_statistic_2d.html#scipy.stats.binned_statistic_2d
+
+    Xedges=np.linspace(np.min(x),np.max(x),nbins+1)
+    Yedges=np.linspace(np.min(y),np.max(y),nbins+1)
+
+    xc=(Xedges[:-1]+Xedges[1:])/2
+    yc=(Yedges[:-1]+Yedges[1:])/2
+
+    ret = stats.binned_statistic_2d(x,y,None,statistic='count',bins=[Xedges,Yedges],expand_binnumbers=True)
+    indX=ret.binnumber[0,:]
+    indY=ret.binnumber[1,:]
+
+    grid=np.zeros((nbins,nbins))
+    stds=np.zeros((nbins,nbins)) # TODO explore if stds and ns are relevant and behave as expected. 
+    ns=np.zeros((nbins,nbins))
+
+    for i in np.arange(nbins):
+        for j in np.arange(nbins):
+            grid[i,j]=np.nanmean( z [np.where((indX==(j+1))*(indY==(i+1)))] ) 
+            stds[i,j]=np.nanstd(z[ np.where((indX==(j+1))*(indY==(i+1))) ])
+            ns[i,j]=np.sum(~np.isnan(z[ np.where((indX==(j+1))*(indY==(i+1))) ]))
+
+    return grid,xc,yc,stds,ns
+
+
+def bindata(x, y, numbins, type='mean', q1=0.02, q2=0.98, bins=None):
+    #https://stackoverflow.com/questions/51407329/nargin-functionality-from-matlab-in-python
+    #BINDATA: function [mu, bins] = bindata(x, y,numbins, type, q1, q2,bins)
+    # bins the data y according to x and returns the bins and the MEAN or
+    # MEDIAN value of y for that bin
+    #INPUT:
+    #x: x data vector
+    #y: y data vector
+    #numbins: number of bins
+    ##type: string#: median, mean or mode, default: mean
+    #q1: lower quantile of data to remove, default: 0.02
+    #q2: upper quantile of data to remove, default: 0.98
+    #bins: bins can be provided, in this case numbins, q1, q2 will be ignored
+    #OUTPUT:
+    #mu: result by bin
+    #centers: centers of bins
+
+#distances_main=distances[(distances<np.percentile(distances,98))&(distances>np.percentile(distances,2))]
+#hist, bins = np.histogram(distances_main, bins=20)
+#center = (bins[:-1] + bins[1:]) / 2
+
+    medianFlag=0
+    modeFlag=0
+
+    if (type=='mean'):
+        medianFlag=0
+    elif (type=='median'):
+        medianFlag=1
+    elif (type=='mode'):
+        modeFlag=1
+    else:
+        print('unrecognized statistical function')
+
+    minn=np.quantile(x,q1)
+    maxx=np.quantile(x,q2)
+
+    mu = np.zeros(numbins)
+    stds = np.zeros(numbins)
+    sems = np.zeros(numbins)
+    centers = np.zeros(numbins)
+
+    if (bins==None):
+        bins = np.linspace(minn, maxx, numbins+1)
+        _,_,bin = stats.binned_statistic(x,None,statistic='count',bins=bins) #  [n,bin] = histc(x, bins)
+        
+        for k in np.arange(numbins):
+            ind = np.where(bin==k) #find(bin==k)
+            if (~np.all(ind==0)): # ~isempty(ind)
+                if medianFlag:
+                    mu[k] = np.nanmedian(y[ind])
+                elif modeFlag:
+                    mu[k] = stats.mode(y[ind])
+                else:
+                    mu[k] = np.nanmean(y[ind])
+                
+                stds[k] = np.nanstd(y[ind])
+                sems[k] = np.nanstd(y[ind])/np.sqrt(np.sum(~np.isnan(y[ind])))
+            else:
+                mu[k]= float("NaN")
+                stds[k] = float("NaN")
+                sems[k] = float("NaN")
+    
+            centers[k]=bins[k]*0.5+bins[k+1]*0.5
+        
+    else:
+        n,_,bin = stats.binned_statistic(x,None,statistic='count',bins=bins) #[n,bin] = histc(x, bins)
+
+        for k in np.arange(np.size(bins)): # 1:numel(bins)-1
+            ind = np.where(bin==k)
+            if (~np.all(ind==0)):
+                ind
+                if medianFlag:
+                    mu[k] = np.nanmedian(y[ind])
+                elif modeFlag:
+                    mu[k] = stats.mode(y[ind])
+                else:
+                    mu[k] = np.nanmean(y[ind])
+                
+                stds[k] = np.nanstd(y[ind])
+                sems[k] = np.nanstd(y[ind])/np.sqrt(np.sum(~np.isnan(y[ind])))
+            else:
+                mu[k]= float("NaN")
+                stds[k] = float("NaN")
+                sems[k] = float("NaN")
+    
+            centers[k]=bins[k]*0.5+bins[k+1]*0.5
+        
+    
+    return centers, mu, stds, sems

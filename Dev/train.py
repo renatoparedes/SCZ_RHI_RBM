@@ -15,30 +15,35 @@ for epoch in np.arange(N_epochs):
     for batch in np.arange(N_batches): #a batch is made by N_vects individual stimuli
         #generate stimuli
         for i in np.arange(N_vects):
-            #pH=np.multiply(g.NeuronInfo[1].min+(g.NeuronInfo[1].max-g.NeuronInfo[1].min),*np.random.rand(1,2))
-            pH=np.multiply(g.NeuronInfo[1].min+(g.NeuronInfo[1].max-g.NeuronInfo[1].min),np.random.rand(2))
+            np.random.seed(255)
+            pH= g.NeuronInfo[1].min+np.multiply((g.NeuronInfo[1].max-g.NeuronInfo[1].min),np.random.rand(2))
+            np.random.seed(255)
             if np.random.rand()>pCouple:
-                #pBc=g.NeuronInfo[0].min-.15+ np.multiply((.3+g.NeuronInfo[0].max-g.NeuronInfo[0].min),*np.random.rand(1,2))
+                np.random.seed(255)
                 pBc=g.NeuronInfo[0].min-.15+ np.multiply((.3+g.NeuronInfo[0].max-g.NeuronInfo[0].min),np.random.rand(2))
             else:
-                #pBc=pH+.15*np.random.normal(1,2)
-                pBc=pH+.15*np.random.normal(2)
-            #gains=4+6*np.random.rand(3,1)
+                np.random.seed(255)
+                pBc=pH+.15*norm.ppf(np.random.rand(2))
+            np.random.seed(255)
             gains=4+6*np.random.rand(3)
             Bc,H,T=stimgen(pBc,pH,g.NeuronInfo,gains)
             stims[:,i]=np.concatenate((Bc, H, T), axis=None)
         
+        np.random.seed(255)
         stims=np.random.poisson(lam=stims)
+        # https://hpaulkeeler.com/simulating-poisson-random-variables-survey-methods/ (not exact equivalent to Matlab)
    
+
         #one-step contrastive divergence, done for all stimuli in a batch
         #at once for efficiency
         #up
         gv=w@stims+bh
         mu=1.0 / (1.0+np.exp(-gv)) 
         mu=mu.conj().T
-        rr=np.random.rand(*np.shape(mu))
+        np.random.seed(255)
+        rr=np.random.rand(*np.shape(mu)) #suspicious *shape
         h=1.0*(rr<mu).conj().T
-            
+
         dW=h@stims.conj().T  
         dBv=np.sum(stims,axis=1,keepdims=True)
         dBh=np.sum(h,axis=1,keepdims=True)
@@ -46,12 +51,14 @@ for epoch in np.arange(N_epochs):
         #down
         gv=w.conj().T@h+bv
         mu=np.exp(gv)
+        np.random.seed(255)
         v=np.random.poisson(lam=mu)
             
         #up
         gv=w@v+bh
-        mu=1.0 / (1.0+np.exp(-gv)) 
+        mu= 1.0 / (1.0+np.exp(-gv)) 
         mu=mu.conj().T
+        np.random.seed(255)
         rr=np.random.rand(*np.shape(mu))
         h=1.0*(rr<mu).conj().T
             
