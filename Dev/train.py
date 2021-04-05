@@ -41,7 +41,7 @@ for epoch in np.arange(N_epochs):
         mu=1.0 / (1.0+np.exp(-gv)) 
         mu=mu.conj().T
         np.random.seed(255)
-        rr=np.random.rand(*np.shape(mu)) #suspicious *shape
+        rr=np.random.rand(np.shape(mu)[1],np.shape(mu)[0]).T
         h=1.0*(rr<mu).conj().T
 
         dW=h@stims.conj().T  
@@ -59,7 +59,7 @@ for epoch in np.arange(N_epochs):
         mu= 1.0 / (1.0+np.exp(-gv)) 
         mu=mu.conj().T
         np.random.seed(255)
-        rr=np.random.rand(*np.shape(mu))
+        rr=np.random.rand(np.shape(mu)[1],np.shape(mu)[0]).T
         h=1.0*(rr<mu).conj().T
             
         dW=dW-h@v.conj().T
