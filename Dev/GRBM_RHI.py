@@ -32,9 +32,9 @@ class grbm: # handle class, beware
 
         #constructor
         def __init__(self,nv,nh,tv,th,names,trainparams,neuroninfo): #done
-            self.V=[structtype(),structtype(),structtype()]
-            self.H=[structtype(),structtype(),structtype()]
-            self.W=[[structtype(),structtype(),structtype()]]
+            self.V=[structtype(),structtype(),structtype(),structtype()]
+            self.H=[structtype(),structtype(),structtype(),structtype()]
+            self.W=[[structtype(),structtype(),structtype(),structtype()]]
             self.NV=nv
             self.NH=nh
             self.Npv=np.size(self.NV)
@@ -42,8 +42,8 @@ class grbm: # handle class, beware
             self.Names=names
             self.TrainParams=trainparams
             self.NeuronInfo=neuroninfo
-            self.WUp=[structtype(),structtype(),structtype()]
-            self.WDown=[structtype(),structtype(),structtype()]
+            self.WUp=[structtype(),structtype(),structtype(),structtype()]
+            self.WDown=[structtype(),structtype(),structtype(),structtype()]
             
             for pv in np.arange(self.Npv):
                 self.V[pv].S=np.zeros((self.NV[pv],1))
@@ -96,9 +96,8 @@ class grbm: # handle class, beware
         def up(self): #done
             inds=np.insert(np.cumsum(self.NV),0,0)
             for pv in np.arange(self.Npv):
-                #currInds=np.arange(inds[pv],inds[pv+1])
-                currInds=np.arange(inds[pv],inds[pv+1]+1)
-                self.VUp[currInds]=self.V[pv].S    #global visible activity
+                currInds=np.arange(inds[pv],inds[pv+1])
+                self.VUp[currInds]=self.V[pv].S.reshape(-1,1) #global visible activity
             
             for ph in np.arange(self.Nph):
                 if np.char.equal(self.H[ph].T,'bern'):
@@ -118,8 +117,7 @@ class grbm: # handle class, beware
         def down(self): #done
             inds=np.insert(np.cumsum(self.NH),0,0)
             for ph in np.arange(self.Nph):
-                #currInds=np.arange(inds[ph],inds[ph+1])
-                currInds=np.arange(inds[ph],inds[ph+1]+1)
+                currInds=np.arange(inds[ph],inds[ph+1])
                 self.VDown[currInds]=self.H[ph].S #global hidden activity
             
             for pv in np.arange(self.Npv):
