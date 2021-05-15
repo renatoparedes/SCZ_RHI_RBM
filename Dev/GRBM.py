@@ -378,7 +378,9 @@ class grbm: # handle class, beware
 
 # compute position in meters given position in neuron units
 def indToPos(ind,neuronInfo):
-    pos=(neuronInfo.center-neuronInfo.span/2)+np.multiply((np.array(ind)),neuronInfo.span)/(neuronInfo.n-1)
+    pos=(neuronInfo.center-neuronInfo.span/2)+(ind-1)*neuronInfo.span/(neuronInfo.n-1)
+    #pos=(neuronInfo.center-neuronInfo.span/2)+np.multiply((np.array(ind)),neuronInfo.span)/(neuronInfo.n-1)
+    #pos=(neuronInfo.center-neuronInfo.span/2)+(ind-1).*neuronInfo.span./(neuronInfo.n-1);
     return pos
 
 # compute position in neuron units given position in meters
